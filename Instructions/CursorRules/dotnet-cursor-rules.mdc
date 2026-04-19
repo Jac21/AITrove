@@ -1,0 +1,75 @@
+# Cursor rules — .NET / C# project recipe
+
+<!--
+  Modern Cursor (0.40+): Place as .cursor/rules/dotnet.mdc in your repo.
+  Legacy Cursor: Place as .cursorrules at the repo root.
+
+  MDC format supports frontmatter for scoping:
+    globs: ["**/*.cs", "**/*.csproj"]   <- only activates for C# files
+    alwaysApply: true                   <- always include in context
+
+  Customize the sections marked [YOUR PROJECT] before committing.
+-->
+
+---
+description: .NET / C# coding standards and project conventions
+globs: ["**/*.cs", "**/*.csproj", "**/*.sln"]
+alwaysApply: false
+---
+
+## Project
+
+[YOUR PROJECT] — [brief one-line description]. .NET 9, C# 13.
+
+## Non-negotiable conventions
+
+### Async / cancellation
+- Every I/O method must be `async Task<T>`, never sync over async
+- `CancellationToken ct = default` on every public async method signature
+- Pass `ct` through — never discard it
+
+### HttpClient
+- Never `new HttpClient()` inside a method body
+- Always inject via `IHttpClientFactory` or as a constructor dependency
+- Dispose correctly — prefer `using var` at the call site if creating locally
+
+### Dependency injection
+- Register everything in `Program.cs` or a dedicated `ServiceCollectionExtensions`
+- Primary constructor injection: `public sealed class Foo(IBar bar)` — preferred over field assignment
+- No service locator pattern (`IServiceProvider` injection is a smell)
+
+### Error handling
+- Throw specific exceptions (`InvalidOperationException`, `ArgumentException`, etc.)
+- Only catch `Exception` at application boundary (middleware, top-level handler)
+- Never swallow exceptions silently
+
+### Logging
+- `ILogger<T>` always — never `Console.WriteLine` in production code
+- Structured templates: `logger.LogInformation("Processing {Count} items", count)`
+- Never string interpolation in log calls
+
+## Style
+
+- `var` when type is obvious from right-hand side; explicit type otherwise
+- File-scoped namespaces: `namespace Foo.Bar;`
+- No `#region` blocks
+- Records for DTOs: `public record Foo(string Bar, int Baz);`
+- Collection expressions: `List<int> x = [1, 2, 3];`
+
+## Patterns in this codebase
+
+### Agent pattern
+Agents implement `IAgent`. Route via `CanHandle(ctx)`. Run concurrently with `Task.WhenAll`.
+Never add orchestration logic inside an agent.
+
+### Prompt templates
+Prompts live in `Prompts/*.txt`. Load via `IPromptLoader`, never hardcode in C#.
+Substitution slots use `{{VARIABLE_NAME}}` convention.
+
+## What Cursor should never suggest
+
+- `.Result` or `.Wait()` — always async
+- `new HttpClient()` inline
+- `catch (Exception ex) { }` with empty body
+- Hardcoded connection strings or API keys
+- `Thread.Sleep` — use `await Task.Delay`

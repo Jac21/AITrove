@@ -1,0 +1,32 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Orchestrators", "Orchestrators", "{C7FCDD3B-87DF-F49A-73B9-BE569E638E4C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DotNet", "DotNet", "{1295E063-A3D7-9D4E-EE53-D80A812C252D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AITrove", "Orchestrators\DotNet\AITrove.csproj", "{C354FF46-9E93-4E9F-1072-518390163EB0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C354FF46-9E93-4E9F-1072-518390163EB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C354FF46-9E93-4E9F-1072-518390163EB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C354FF46-9E93-4E9F-1072-518390163EB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C354FF46-9E93-4E9F-1072-518390163EB0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1295E063-A3D7-9D4E-EE53-D80A812C252D} = {C7FCDD3B-87DF-F49A-73B9-BE569E638E4C}
+		{C354FF46-9E93-4E9F-1072-518390163EB0} = {1295E063-A3D7-9D4E-EE53-D80A812C252D}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6BA46606-A6AE-4DEF-A08B-2E07E81EF82D}
+	EndGlobalSection
+EndGlobal
