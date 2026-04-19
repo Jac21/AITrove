@@ -18,6 +18,7 @@ namespace AITrove.Workflows;
 /// </summary>
 public sealed class WorkflowOrchestrator(
     IEnumerable<IAgent> agents,
+    IAnthropicMessageClient anthropic,
     ILogger<WorkflowOrchestrator> logger)
 {
     private readonly IReadOnlyList<IAgent> _agents = [.. agents];
@@ -67,32 +68,15 @@ public sealed class WorkflowOrchestrator(
 
     private async Task<string> SynthesizeAsync(AgentContext ctx, CancellationToken ct)
     {
-        using var http = new HttpClient();
-        http.DefaultRequestHeaders.Add("x-api-key", ctx.ApiKey);
-        http.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
-
-        var body = new
-        {
-            model                = "claude-sonnet-4-5",
-            max_tokens = 1024,
-            system               = ctx.SystemPrompt,
-            messages             = new[]
-            {
-                new
-                {
-                    role    = "user",
-                    content = new[] { new { type = "text", text = ctx.BuildSynthesisPrompt() } }
-                }
-            }
-        };
-
-        return await AnthropicClient.PostMessagesAsync(http, body, ct);
+        return await anthropic.SendMessageAsync(
+            ctx.ApiKey,
+            AnthropicModelIds.ClaudeSonnet4,
+            maxTokens: 1024,
+            systemPrompt: ctx.SystemPrompt,
+            userMessage: ctx.BuildSynthesisPrompt(),
+            ct);
     }
 }
 
 // ---------------------------------------------------------------------------
-// Shared response types — move to a shared Models/ folder as the trove grows.
-
 public record AgentResult(string AgentName, string Output, bool Success);
-public record AnthropicResponse(List<ContentBlock> Content);
-public record ContentBlock(string Text);

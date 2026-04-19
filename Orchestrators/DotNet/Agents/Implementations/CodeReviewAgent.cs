@@ -1,8 +1,6 @@
-using System.Net.Http.Json;
 using AITrove.Agents.Interfaces;
 using AITrove.Context;
 using AITrove.Prompts.Interfaces;
-using AITrove.Workflows;
 
 namespace AITrove.Agents.Implementations;
 
@@ -11,7 +9,9 @@ namespace AITrove.Agents.Implementations;
 /// Loads its system and user prompts from the Prompts/ folder at runtime,
 /// keeping the model instructions fully decoupled from the C# code.
 /// </summary>
-public sealed class CodeReviewAgent(IPromptLoader prompts) : IAgent
+public sealed class CodeReviewAgent(
+    IPromptLoader prompts,
+    IAnthropicMessageClient anthropic) : IAgent
 {
     public string Name => "CodeReviewAgent";
 
@@ -26,25 +26,12 @@ public sealed class CodeReviewAgent(IPromptLoader prompts) : IAgent
         var userTmpl  = await prompts.LoadAsync("code-review.user", ct);
         var userMsg   = userTmpl.Replace("{{CODE}}", code);
 
-        using var http = new HttpClient();
-        http.DefaultRequestHeaders.Add("x-api-key", ctx.ApiKey);
-        http.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
-
-        var body = new
-        {
-            model                = "claude-sonnet-4-20250514",
-            max_tokens_to_sample = 512,
-            system               = sysPrompt,
-            messages             = new[]
-            {
-                new
-                {
-                    role    = "user",
-                    content = new[] { new { type = "text", text = userMsg } }
-                }
-            }
-        };
-
-        return await AnthropicClient.PostMessagesAsync(http, body, ct);
+        return await anthropic.SendMessageAsync(
+            ctx.ApiKey,
+            AnthropicModelIds.ClaudeSonnet4,
+            maxTokens: 512,
+            systemPrompt: sysPrompt,
+            userMessage: userMsg,
+            ct);
     }
 }

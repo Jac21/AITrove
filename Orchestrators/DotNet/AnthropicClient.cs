@@ -1,94 +1,81 @@
 using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
+using Anthropic.SDK.Messaging;
 
 namespace AITrove;
 
-internal static class AnthropicClient
+public sealed class AnthropicMessageClient : IAnthropicMessageClient
 {
-    private const string MessagesUrl = "https://api.anthropic.com/v1/messages";
-
-    public static async Task<string> PostMessagesAsync<TBody>(
-        HttpClient http,
-        TBody body,
+    public async Task<string> SendMessageAsync(
+        string apiKey,
+        string requestedModel,
+        int maxTokens,
+        string systemPrompt,
+        string userMessage,
         CancellationToken ct = default)
     {
-        var resp = await http.PostAsJsonAsync(MessagesUrl, body, ct);
-        if (!resp.IsSuccessStatusCode)
+        Exception? lastModelNotFound = null;
+
+        foreach (var model in AnthropicModelIds.ResolveModelCandidates(requestedModel))
         {
-            var errorText = await resp.Content.ReadAsStringAsync(ct);
+            try
+            {
+                return await SendSingleMessageAsync(apiKey, model, maxTokens, systemPrompt, userMessage, ct);
+            }
+            catch (HttpRequestException ex) when (IsModelNotFound(ex))
+            {
+                lastModelNotFound = ex;
+            }
+        }
+
+        if (lastModelNotFound is not null)
+        {
+            var attemptedModels = string.Join(", ", AnthropicModelIds.ResolveModelCandidates(requestedModel));
             throw new HttpRequestException(
-                $"Anthropic request failed {resp.StatusCode}: {errorText}");
+                $"Anthropic model lookup failed after trying: {attemptedModels}. " +
+                $"Set {AnthropicModelIds.ModelOverrideEnvironmentVariable} to a model available to your account. " +
+                $"Last error: {lastModelNotFound.Message}",
+                lastModelNotFound);
         }
 
-        return await ReadResponseTextAsync(resp.Content, ct);
+        throw new InvalidOperationException("No Anthropic model candidates were resolved.");
     }
 
-    private static async Task<string> ReadResponseTextAsync(HttpContent content, CancellationToken ct)
+    private static async Task<string> SendSingleMessageAsync(
+        string apiKey,
+        string model,
+        int maxTokens,
+        string systemPrompt,
+        string userMessage,
+        CancellationToken ct)
     {
-        await using var stream = await content.ReadAsStreamAsync(ct);
-        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-        if (TryExtractText(doc.RootElement, out var text))
-            return text.Trim();
+        using var httpClient = CreateHttpClient();
+        using var client = new global::Anthropic.SDK.AnthropicClient(apiKey, httpClient);
 
-        return string.Empty;
-    }
-
-    private static bool TryExtractText(JsonElement element, out string text)
-    {
-        switch (element.ValueKind)
+        var parameters = new MessageParameters
         {
-            case JsonValueKind.String:
-                text = element.GetString() ?? string.Empty;
-                return !string.IsNullOrWhiteSpace(text);
+            Model         = model,
+            MaxTokens     = maxTokens,
+            SystemMessage = systemPrompt,
+            Messages      = [new Message(RoleType.User, userMessage)],
+            Stream        = false
+        };
 
-            case JsonValueKind.Array:
-                var builder = new StringBuilder();
-                foreach (var item in element.EnumerateArray())
-                {
-                    if (TryExtractText(item, out var itemText) && !string.IsNullOrWhiteSpace(itemText))
-                        builder.Append(itemText);
-                }
+        global::System.Collections.Generic.IList<global::Anthropic.SDK.Common.Tool> tools = [];
+        var response = await client.Messages.GetClaudeMessageAsync(parameters, tools, ct);
+        var text = response.Message?.ToString()?.Trim();
+        if (!string.IsNullOrWhiteSpace(text))
+            return text;
 
-                text = builder.ToString();
-                return !string.IsNullOrWhiteSpace(text);
-
-            case JsonValueKind.Object:
-                if (element.TryGetProperty("text", out var textProp) && textProp.ValueKind == JsonValueKind.String)
-                {
-                    text = textProp.GetString() ?? string.Empty;
-                    return !string.IsNullOrWhiteSpace(text);
-                }
-
-                if (element.TryGetProperty("completion", out var completionProp) && TryExtractText(completionProp, out text))
-                    return true;
-
-                if (element.TryGetProperty("content", out var contentProp) && TryExtractText(contentProp, out text))
-                    return true;
-
-                if (element.TryGetProperty("choices", out var choicesProp) && choicesProp.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var choice in choicesProp.EnumerateArray())
-                    {
-                        if (TryExtractText(choice, out text) && !string.IsNullOrWhiteSpace(text))
-                            return true;
-                    }
-                }
-
-                if (element.TryGetProperty("message", out var messageProp) && TryExtractText(messageProp, out text))
-                    return true;
-
-                foreach (var property in element.EnumerateObject())
-                {
-                    if (TryExtractText(property.Value, out text) && !string.IsNullOrWhiteSpace(text))
-                        return true;
-                }
-
-                break;
-        }
-
-        text = string.Empty;
-        return false;
+        return response.FirstMessage?.Text?.Trim() ?? string.Empty;
     }
+
+    private static bool IsModelNotFound(HttpRequestException ex) =>
+        ex.Message.Contains("\"type\":\"not_found_error\"", StringComparison.OrdinalIgnoreCase) &&
+        ex.Message.Contains("model:", StringComparison.OrdinalIgnoreCase);
+
+    private static HttpClient CreateHttpClient() =>
+        new(new HttpClientHandler
+        {
+            UseCookies = false
+        });
 }
