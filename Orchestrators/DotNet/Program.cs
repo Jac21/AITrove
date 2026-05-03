@@ -7,6 +7,25 @@ using AITrove.Workflows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+CliRequest? request;
+try
+{
+    request = await CliRequestParser.ParseAsync(args, Console.In, Console.IsInputRedirected);
+}
+catch (ArgumentException ex)
+{
+    Console.Error.WriteLine(ex.Message);
+    Console.Error.WriteLine();
+    Console.Error.WriteLine(CliRequestParser.BuildUsage());
+    return;
+}
+
+if (request is null)
+{
+    Console.WriteLine(CliRequestParser.BuildUsage());
+    return;
+}
+
 var services = new ServiceCollection()
     .AddLogging(b => b.AddConsole().SetMinimumLevel(LogLevel.Debug))
     .AddSingleton<IPromptLoader>(_ =>
@@ -24,18 +43,11 @@ var orchestrator = services.GetRequiredService<WorkflowOrchestrator>();
 var ctx = new AgentContext
 {
     ApiKey       = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY") ?? throw new InvalidOperationException("ANTHROPIC_API_KEY not set"),
-    SystemPrompt = "You are a senior .NET engineer. Synthesize the agent findings below into a concise, prioritized summary.",
-    UserMessage  = "Please review my code and summarize the findings.",
+    SystemPrompt = request.SystemPrompt,
+    UserMessage  = request.UserMessage,
     Metadata     =
     {
-        ["code"] = """
-            public async Task<string> GetDataAsync(string url)
-            {
-                var client = new HttpClient();
-                var response = await client.GetAsync(url);
-                return await response.Content.ReadAsStringAsync();
-            }
-            """
+        ["code"] = request.Code
     }
 };
 

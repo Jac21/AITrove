@@ -1,88 +1,63 @@
-# Skill authoring guide
+# Skills
 
-A **skill** in AITrove is a stateless, single-purpose function that wraps one Claude API call.
-Skills are the atoms of the trove — agents and orchestrators compose them.
+This folder contains cross-platform skill definitions in standard Markdown format.
 
-## Anatomy of a skill
+Skills are reusable instruction packs: small, focused capabilities that can be invoked from different runtimes, agents, or orchestrators without depending on a specific implementation language.
 
-```
+## Folder layout
+
+```text
 Skills/
-└── YourSkill.cs      ← stateless static class or thin service
+├── SKILL.md
+└── YourSkill/
+    ├── SKILL.md
+    └── references/
+        └── supporting-file.md
 ```
 
-A skill:
+## What belongs in a skill
 
-- Takes plain inputs (strings, primitives, small DTOs)
-- Makes exactly one Claude API call
-- Returns a plain output (string, structured record)
-- Carries no state between calls
-- Is independently testable with a mocked HTTP client
+A skill should:
+
+- solve one focused problem well
+- be portable across platforms and runtimes
+- describe inputs, outputs, constraints, and quality bar
+- link to reference files instead of embedding too much repeated detail
+
+A skill should not:
+
+- assume a specific SDK, framework, or programming language unless the skill is intentionally platform-specific
+- duplicate large reference material directly in the main `SKILL.md`
+- carry runtime state between invocations
 
 ## When to use a skill vs an agent
 
-| Use a **skill** when…                     | Use an **agent** when…                   |
-| ----------------------------------------- | ---------------------------------------- |
-| The task is one API call                  | The task needs context from other agents |
-| The function is reusable across workflows | The logic is specific to one workflow    |
-| You want a utility others can import      | You need `CanHandle` routing logic       |
+| Use a **skill** when… | Use an **agent** when… |
+| --- | --- |
+| The task is narrow and repeatable | The task needs routing, multi-step execution, or orchestration |
+| The instructions should be reusable across platforms | The logic is tied to one workflow or runtime |
+| You want a durable prompt/instruction asset | You need tool coordination and context accumulation |
 
-## Skill template (C#)
+## Skill authoring template
 
-```csharp
-namespace AITrove.Skills;
+Each skill folder should contain a `SKILL.md` that covers:
 
-public static class YourSkill
-{
-    public static async Task<string> RunAsync(
-        string input,
-        string apiKey,
-        CancellationToken ct = default)
-    {
-        using var http = new HttpClient();
-        http.DefaultRequestHeaders.Add("x-api-key", apiKey);
-        http.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
-
-        var body = new
-        {
-            model                = "claude-haiku-4-5-20251001",   // use Haiku for cheap one-shots
-            max_tokens_to_sample = 256,
-            system               = "Answer succinctly and clearly.",
-            messages             = new[]
-            {
-                new
-                {
-                    role    = "user",
-                    content = new[] { new { type = "text", text = $"Your prompt here: {input}" } }
-                }
-            }
-        };
-
-        var resp = await http.PostAsJsonAsync("https://api.anthropic.com/v1/messages", body, ct);
-        resp.EnsureSuccessStatusCode();
-
-        var json = await resp.Content.ReadFromJsonAsync<AnthropicResponse>(cancellationToken: ct);
-        return json?.Content?[0].Text ?? string.Empty;
-    }
-}
-```
-
-## Model selection guide
-
-| Use case                            | Recommended model           | Why          |
-| ----------------------------------- | --------------------------- | ------------ |
-| Quick classification, summarization | `claude-haiku-4-5-20251001` | Fast + cheap |
-| Code review, analysis, reasoning    | `claude-sonnet-4-20250514`  | Balanced     |
-| Complex multi-step reasoning        | `claude-opus-4-20250514`    | Most capable |
+1. What the skill does
+2. When to use it
+3. Expected inputs
+4. Expected output shape
+5. Step-by-step instructions
+6. Links to any `references/` files
 
 ## Existing skills
 
-| Skill                   | What it does                        | Model |
-| ----------------------- | ----------------------------------- | ----- |
-| `SummarizationSkill.cs` | Summarize arbitrary text to N words | Haiku |
+| Skill folder | What it does |
+| --- | --- |
+| `Summarization/` | Summarize arbitrary text into a concise, audience-aware summary |
 
 ## Adding a new skill
 
-1. Create `YourSkillName.cs` in `Skills/`
-2. Follow the template above
-3. Add a row to the table above
-4. Add a matching prompt to `Prompts/` if the prompt is non-trivial
+1. Create `Skills/YourSkill/`
+2. Add `Skills/YourSkill/SKILL.md`
+3. Add any reusable supporting material under `Skills/YourSkill/references/`
+4. Add a row to the table above

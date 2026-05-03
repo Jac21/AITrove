@@ -37,7 +37,7 @@ dotnet add package [PackageName]
 [Describe the high-level structure here — 3-5 bullet points max.]
 
 - `src/[YourProject]/Orchestrators/` — multi-agent workflow coordination
-- `src/[YourProject]/Skills/`        — stateless single-purpose AI functions
+- `src/[YourProject]/Skills/`        — reusable Markdown skill packs and references
 - `src/[YourProject]/Prompts/`       — versioned prompt templates (`.txt`)
 - `src/[YourProject].Tests/`         — xUnit unit tests
 

@@ -12,17 +12,40 @@ This project contains the .NET orchestration sample for AITrove's agent workflow
 From the repository root:
 
 ```bash
-ANTHROPIC_API_KEY=your-key-here dotnet run --project Orchestrators/DotNet
+ANTHROPIC_API_KEY=your-key-here dotnet run --project Orchestrators/DotNet -- --code-file path/to/file.cs
 ```
 
 From the project folder:
 
 ```bash
 cd Orchestrators/DotNet
-ANTHROPIC_API_KEY=your-key-here dotnet run
+ANTHROPIC_API_KEY=your-key-here dotnet run -- --code-file path/to/file.cs
 ```
 
-The sample `Program.cs` bootstraps the DI container, runs the eligible agents, and then asks Anthropic to synthesize the final result.
+The CLI now accepts real code input instead of the old hardcoded sample. You can provide content three ways:
+
+- `--code-file path/to/file.cs`
+- `--code "public class Example { }"`
+- `--stdin` or a redirected pipe
+
+Examples:
+
+```bash
+ANTHROPIC_API_KEY=your-key-here dotnet run --project Orchestrators/DotNet -- --code-file src/MyService.cs
+```
+
+```bash
+git diff -- MyFile.cs | ANTHROPIC_API_KEY=your-key-here dotnet run --project Orchestrators/DotNet -- --stdin --prompt "Review this diff and summarize the highest-risk findings."
+```
+
+```bash
+ANTHROPIC_API_KEY=your-key-here dotnet run --project Orchestrators/DotNet -- --code "public async Task<string> GetAsync(HttpClient http) => await http.GetStringAsync(\"/\");"
+```
+
+Optional prompt controls:
+
+- `--prompt "Focus on correctness and security risks."`
+- `--system-prompt "You are a staff .NET reviewer. Return a concise severity-ranked summary."`
 
 ### Model Selection
 
