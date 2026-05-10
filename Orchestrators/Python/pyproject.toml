@@ -1,0 +1,9 @@
+[project]
+name = "aitrove-rag-orchestrator"
+version = "0.1.0"
+description = "Python fan-out/synthesize orchestrator for RAG system design."
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
