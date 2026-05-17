@@ -72,3 +72,11 @@ ENV/
 dist/
 build/
 *.egg-info/
+
+# Node / frontend
+node_modules/
+.vite/
+*.tsbuildinfo
+Frontend/Directory/public/generated/
+Frontend/Directory/vite.config.js
+Frontend/Directory/vite.config.d.ts
