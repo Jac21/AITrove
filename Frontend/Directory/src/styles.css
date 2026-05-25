@@ -30,6 +30,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 button,
@@ -51,6 +52,7 @@ button {
   grid-template-columns: 340px 1fr;
   gap: 1.5rem;
   padding: 1.5rem;
+  min-width: 0;
 }
 
 .sidebar,
@@ -60,6 +62,7 @@ button {
   background: var(--panel);
   backdrop-filter: blur(16px);
   box-shadow: var(--shadow);
+  min-width: 0;
 }
 
 .sidebar {
@@ -80,6 +83,8 @@ button {
 
 .brand-block h1 {
   font-size: clamp(2rem, 2.5vw, 2.6rem);
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
 }
 
 .lede,
@@ -88,6 +93,7 @@ button {
 .section-button-copy,
 .state-card p {
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .eyebrow {
@@ -111,15 +117,18 @@ button {
   border-radius: 999px;
   padding: 0.85rem 1rem;
   background: rgba(255, 255, 255, 0.74);
+  color: var(--ink);
 }
 
 .section-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .section-button {
+  appearance: none;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.42);
   border-radius: var(--radius-md);
@@ -138,6 +147,16 @@ button {
 .entry-card:hover,
 .detail-actions button:hover {
   transform: translateY(-2px);
+}
+
+.section-button:focus-visible,
+.entry-card:focus-visible,
+.detail-actions button:focus-visible,
+.search-block input:focus-visible,
+.mobile-toolbar-button:focus-visible,
+.mobile-back-button:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.3);
+  outline-offset: 2px;
 }
 
 .section-button.is-active {
@@ -160,6 +179,11 @@ button {
   display: grid;
   grid-template-columns: minmax(320px, 460px) minmax(0, 1fr);
   gap: 1.5rem;
+  min-width: 0;
+}
+
+.mobile-toolbar {
+  display: none;
 }
 
 .catalog-panel,
@@ -210,10 +234,14 @@ button {
 }
 
 .entry-card {
+  appearance: none;
+  width: 100%;
+  text-align: left;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 1rem 1.1rem;
   background: rgba(255, 255, 255, 0.48);
+  color: inherit;
   transition:
     transform 160ms ease,
     border-color 160ms ease,
@@ -244,6 +272,8 @@ button {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   color: var(--muted);
   font-size: 0.8rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .entry-summary {
@@ -266,6 +296,15 @@ button {
   background: rgba(255, 255, 255, 0.7);
   border-radius: 999px;
   padding: 0.72rem 1rem;
+}
+
+.mobile-back-button {
+  display: none;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  margin-bottom: 0.75rem;
 }
 
 .detail-meta {
@@ -315,6 +354,7 @@ button {
 @media (max-width: 1180px) {
   .app-shell {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .content-shell {
@@ -329,19 +369,168 @@ button {
 
 @media (max-width: 720px) {
   .app-shell {
-    padding: 1rem;
-    gap: 1rem;
+    padding: 0.6rem;
+    gap: 0.75rem;
   }
 
   .sidebar,
   .catalog-panel,
   .detail-panel {
-    border-radius: 24px;
-    padding: 1rem;
+    border-radius: 20px;
+    padding: 0.9rem;
   }
 
   .panel-header,
   .detail-header {
     flex-direction: column;
+  }
+
+  .brand-block h1 {
+    font-size: clamp(1.35rem, 14vw, 2.7rem);
+    line-height: 0.98;
+  }
+
+  .lede {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+  }
+
+  .sidebar {
+    gap: 1rem;
+  }
+
+  .section-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .section-button {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .section-button-copy {
+    display: none;
+  }
+
+  .section-button-topline {
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-button-topline strong,
+  .section-button-topline span:last-child {
+    min-width: 0;
+  }
+
+  .section-button-topline strong {
+    font-size: 0.95rem;
+    overflow-wrap: anywhere;
+  }
+
+  .content-shell {
+    gap: 0.75rem;
+  }
+
+  .mobile-toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255, 250, 241, 0.92);
+    backdrop-filter: blur(14px);
+  }
+
+  .mobile-toolbar-button {
+    appearance: none;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 0.7rem 0.9rem;
+    background: transparent;
+    color: var(--muted);
+  }
+
+  .mobile-toolbar-button.is-active {
+    background: var(--accent-soft);
+    border-color: rgba(15, 118, 110, 0.25);
+    color: var(--ink);
+  }
+
+  .mobile-toolbar-meta {
+    display: none;
+  }
+
+  .catalog-panel,
+  .detail-panel {
+    min-height: auto;
+  }
+
+  .content-shell.show-browse .detail-panel {
+    display: none;
+  }
+
+  .content-shell.show-detail .catalog-panel {
+    display: none;
+  }
+
+  .entry-grid {
+    gap: 0.7rem;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .entry-card {
+    padding: 0.9rem;
+  }
+
+  .entry-card h3 {
+    font-size: 1.05rem;
+    overflow-wrap: anywhere;
+  }
+
+  .entry-summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .detail-panel {
+    overflow: visible;
+  }
+
+  .mobile-back-button {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .detail-actions {
+    width: 100%;
+  }
+
+  .detail-actions button {
+    flex: 1 1 100%;
+    text-align: center;
+  }
+
+  .detail-meta {
+    gap: 0.45rem 0.7rem;
+  }
+
+  .content-preview {
+    max-height: 62vh;
+    padding: 1rem;
+    font-size: 0.82rem;
   }
 }

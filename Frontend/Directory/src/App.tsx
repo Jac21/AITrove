@@ -8,6 +8,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [activeSection, setActiveSection] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mobilePane, setMobilePane] = useState<"browse" | "detail">("browse");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,6 +59,11 @@ export default function App() {
   const selectedEntry = filteredEntries.find((entry) => entry.id === selectedId) ?? filteredEntries[0] ?? null;
   const activeSectionMeta = sections.find((section) => section.id === activeSection) ?? null;
 
+  function handleSelectEntry(entryId: string) {
+    setSelectedId(entryId);
+    setMobilePane("detail");
+  }
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -72,9 +78,13 @@ export default function App() {
         <label className="search-block">
           <span>Search repository content</span>
           <input
+            type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by file, path, or summary"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
           />
         </label>
 
@@ -84,7 +94,10 @@ export default function App() {
             description="Everything included in the generated manifest."
             count={entries.length}
             active={activeSection === "all"}
-            onClick={() => setActiveSection("all")}
+            onClick={() => {
+              setActiveSection("all");
+              setMobilePane("browse");
+            }}
           />
           {sections.map((section) => (
             <SectionButton
@@ -93,14 +106,40 @@ export default function App() {
               description={section.description}
               count={entries.filter((entry) => entry.section === section.id).length}
               active={activeSection === section.id}
-              onClick={() => setActiveSection(section.id)}
+              onClick={() => {
+                setActiveSection(section.id);
+                setMobilePane("browse");
+              }}
             />
           ))}
         </nav>
       </aside>
 
-      <main className="content-shell">
-        <section className="catalog-panel">
+      <main className={`content-shell ${mobilePane === "detail" ? "show-detail" : "show-browse"}`}>
+        <div className="mobile-toolbar" role="tablist" aria-label="Directory view mode">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobilePane === "browse"}
+            className={`mobile-toolbar-button ${mobilePane === "browse" ? "is-active" : ""}`}
+            onClick={() => setMobilePane("browse")}
+          >
+            Browse
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobilePane === "detail"}
+            className={`mobile-toolbar-button ${mobilePane === "detail" ? "is-active" : ""}`}
+            onClick={() => setMobilePane("detail")}
+            disabled={!selectedEntry}
+          >
+            Detail
+          </button>
+          <span className="mobile-toolbar-meta">{filteredEntries.length} files</span>
+        </div>
+
+        <section className="catalog-panel" aria-label="Repository file browser">
           <header className="panel-header">
             <div>
               <p className="eyebrow">Directory</p>
@@ -122,11 +161,13 @@ export default function App() {
 
           <div className="entry-grid">
             {filteredEntries.map((entry, index) => (
-              <article
+              <button
                 key={entry.id}
                 className={`entry-card ${selectedEntry?.id === entry.id ? "is-selected" : ""}`}
                 style={{ animationDelay: `${index * 35}ms` }}
-                onClick={() => setSelectedId(entry.id)}
+                onClick={() => handleSelectEntry(entry.id)}
+                aria-pressed={selectedEntry?.id === entry.id}
+                type="button"
               >
                 <div className="entry-card-header">
                   <span className="file-chip">{entry.language}</span>
@@ -135,14 +176,18 @@ export default function App() {
                 <h3>{entry.title}</h3>
                 <p className="entry-path">{entry.path}</p>
                 <p className="entry-summary">{entry.summary}</p>
-              </article>
+              </button>
             ))}
           </div>
         </section>
 
-        <section className="detail-panel">
+        <section className="detail-panel" aria-label="Selected file details">
           {selectedEntry ? (
-            <DetailView entry={selectedEntry} section={sections.find((item) => item.id === selectedEntry.section) ?? null} />
+            <DetailView
+              entry={selectedEntry}
+              section={sections.find((item) => item.id === selectedEntry.section) ?? null}
+              onBackToBrowse={() => setMobilePane("browse")}
+            />
           ) : (
             <EmptyState title="No file selected" body="Select a file from the directory to inspect its contents." />
           )}
@@ -170,7 +215,11 @@ function SectionButton(props: {
   );
 }
 
-function DetailView(props: { entry: ManifestEntry; section: ManifestSection | null }) {
+function DetailView(props: {
+  entry: ManifestEntry;
+  section: ManifestSection | null;
+  onBackToBrowse: () => void;
+}) {
   const [copied, setCopied] = useState<"path" | "content" | null>(null);
 
   async function copy(value: string, type: "path" | "content") {
@@ -183,13 +232,18 @@ function DetailView(props: { entry: ManifestEntry; section: ManifestSection | nu
     <>
       <header className="panel-header detail-header">
         <div>
+          <button type="button" className="mobile-back-button" onClick={props.onBackToBrowse}>
+            Back to list
+          </button>
           <p className="eyebrow">{props.section?.title ?? "File"}</p>
           <h2>{props.entry.title}</h2>
           <p className="panel-copy">{props.entry.summary}</p>
         </div>
         <div className="detail-actions">
-          <button onClick={() => void copy(props.entry.path, "path")}>{copied === "path" ? "Copied path" : "Copy path"}</button>
-          <button onClick={() => void copy(props.entry.content, "content")}>
+          <button type="button" onClick={() => void copy(props.entry.path, "path")}>
+            {copied === "path" ? "Copied path" : "Copy path"}
+          </button>
+          <button type="button" onClick={() => void copy(props.entry.content, "content")}>
             {copied === "content" ? "Copied content" : "Copy content"}
           </button>
         </div>
