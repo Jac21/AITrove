@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ManifestEntry, ManifestSection, RepositoryManifest } from "./types";
+import type { ManifestConcept, ManifestEntry, ManifestSection, RepositoryManifest } from "./types";
 
 const manifestUrl = `${import.meta.env.BASE_URL}generated/manifest.json`;
 
@@ -31,6 +31,7 @@ export default function App() {
 
   const sections = manifest?.sections ?? [];
   const entries = manifest?.entries ?? [];
+  const concepts = manifest?.concepts ?? [];
 
   const filteredEntries = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -50,6 +51,33 @@ export default function App() {
     });
   }, [activeSection, entries, query]);
 
+  const filteredConcepts = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return concepts.filter((concept) => {
+      const matchesSection = activeSection === "all" || concept.section === activeSection;
+      if (!matchesSection) {
+        return false;
+      }
+
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      const haystack = [
+        concept.title,
+        concept.summary,
+        concept.details,
+        concept.relatedPaths.join(" "),
+        concept.tags.join(" "),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(normalizedQuery);
+    });
+  }, [activeSection, concepts, query]);
+
   useEffect(() => {
     if (!filteredEntries.some((entry) => entry.id === selectedId)) {
       setSelectedId(filteredEntries[0]?.id ?? null);
@@ -58,6 +86,13 @@ export default function App() {
 
   const selectedEntry = filteredEntries.find((entry) => entry.id === selectedId) ?? filteredEntries[0] ?? null;
   const activeSectionMeta = sections.find((section) => section.id === activeSection) ?? null;
+  const selectedEntryConcepts = useMemo(() => {
+    if (!selectedEntry) {
+      return [];
+    }
+
+    return concepts.filter((concept) => concept.relatedPaths.includes(selectedEntry.path));
+  }, [concepts, selectedEntry]);
 
   function handleSelectEntry(entryId: string) {
     setSelectedId(entryId);
@@ -136,7 +171,9 @@ export default function App() {
           >
             Detail
           </button>
-          <span className="mobile-toolbar-meta">{filteredEntries.length} files</span>
+          <span className="mobile-toolbar-meta">
+            {filteredEntries.length} files, {filteredConcepts.length} notes
+          </span>
         </div>
 
         <section className="catalog-panel" aria-label="Repository file browser">
@@ -148,16 +185,20 @@ export default function App() {
                 {activeSectionMeta?.description ?? "Cross-section view of the repository structure."}
               </p>
             </div>
-            <div className="meta-pill">{filteredEntries.length} files</div>
+            <div className="meta-pill">
+              {filteredEntries.length} files · {filteredConcepts.length} notes
+            </div>
           </header>
 
           {error ? <ErrorState message={error} /> : null}
 
           {!error && !manifest ? <EmptyState title="Loading manifest" body="Building the repository view." /> : null}
 
-          {!error && manifest && filteredEntries.length === 0 ? (
-            <EmptyState title="No matching files" body="Adjust the search query or switch sections." />
+          {!error && manifest && filteredEntries.length === 0 && filteredConcepts.length === 0 ? (
+            <EmptyState title="No matching content" body="Adjust the search query or switch sections." />
           ) : null}
+
+          {filteredConcepts.length > 0 ? <ConceptList concepts={filteredConcepts} /> : null}
 
           <div className="entry-grid">
             {filteredEntries.map((entry, index) => (
@@ -186,6 +227,7 @@ export default function App() {
             <DetailView
               entry={selectedEntry}
               section={sections.find((item) => item.id === selectedEntry.section) ?? null}
+              relatedConcepts={selectedEntryConcepts}
               onBackToBrowse={() => setMobilePane("browse")}
             />
           ) : (
@@ -194,6 +236,33 @@ export default function App() {
         </section>
       </main>
     </div>
+  );
+}
+
+function ConceptList(props: { concepts: ManifestConcept[] }) {
+  return (
+    <section className="concept-section" aria-labelledby="concept-section-title">
+      <div className="concept-section-header">
+        <p className="eyebrow" id="concept-section-title">
+          Reference Notes
+        </p>
+        <span>{props.concepts.length}</span>
+      </div>
+      <div className="concept-list">
+        {props.concepts.map((concept) => (
+          <article className="concept-card" key={concept.id}>
+            <h3>{concept.title}</h3>
+            <p>{concept.summary}</p>
+            <p className="concept-details">{concept.details}</p>
+            <div className="concept-tags" aria-label={`${concept.title} tags`}>
+              {concept.tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -218,6 +287,7 @@ function SectionButton(props: {
 function DetailView(props: {
   entry: ManifestEntry;
   section: ManifestSection | null;
+  relatedConcepts: ManifestConcept[];
   onBackToBrowse: () => void;
 }) {
   const [copied, setCopied] = useState<"path" | "content" | null>(null);
@@ -254,6 +324,20 @@ function DetailView(props: {
         <span>{props.entry.language}</span>
         <span>{formatBytes(props.entry.bytes)}</span>
       </div>
+
+      {props.relatedConcepts.length > 0 ? (
+        <section className="related-concepts" aria-labelledby="related-concepts-title">
+          <p className="eyebrow" id="related-concepts-title">
+            Related Concepts
+          </p>
+          {props.relatedConcepts.map((concept) => (
+            <article className="related-concept" key={concept.id}>
+              <h3>{concept.title}</h3>
+              <p>{concept.summary}</p>
+            </article>
+          ))}
+        </section>
+      ) : null}
 
       <pre className="content-preview">
         <code>{props.entry.content}</code>

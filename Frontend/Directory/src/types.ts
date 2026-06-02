@@ -16,8 +16,19 @@ export type ManifestEntry = {
   bytes: number;
 };
 
+export type ManifestConcept = {
+  id: string;
+  title: string;
+  section: string;
+  summary: string;
+  details: string;
+  relatedPaths: string[];
+  tags: string[];
+};
+
 export type RepositoryManifest = {
   generatedAt: string;
   sections: ManifestSection[];
+  concepts: ManifestConcept[];
   entries: ManifestEntry[];
 };

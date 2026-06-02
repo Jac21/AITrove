@@ -1,0 +1,108 @@
+[
+  {
+    "id": "orchestrators",
+    "title": "Orchestrators",
+    "section": "orchestrators",
+    "summary": "Runtime or documentation-bound systems that coordinate agents, prompts, model calls, and synthesis.",
+    "details": "In AITrove, orchestrators are the executable or reference implementations for multi-step AI workflows. They define how inputs become agent context, how agents are invoked, how failures are handled, and how final output is synthesized.",
+    "relatedPaths": [
+      "Orchestrators/README.md"
+    ],
+    "tags": [
+      "runtime",
+      "coordination",
+      "agents"
+    ]
+  },
+  {
+    "id": "dotnet-orchestrator",
+    "title": ".NET Orchestrator",
+    "section": "orchestrators",
+    "summary": "A C# implementation of the agent workflow runner with Anthropic integration and live-test guidance.",
+    "details": "The .NET orchestrator shows how a typed application composes agents, prompt templates, model configuration, logging, and synthesis. It is useful as the production-style example for strongly typed orchestration patterns.",
+    "relatedPaths": [
+      "Orchestrators/DotNet/README.md"
+    ],
+    "tags": [
+      ".NET",
+      "C#",
+      "Anthropic"
+    ]
+  },
+  {
+    "id": "python-rag-orchestrator",
+    "title": "Python RAG Orchestrator",
+    "section": "orchestrators",
+    "summary": "A Python reference path for retrieval-augmented generation workflows and context assembly.",
+    "details": "The Python orchestrator demonstrates the RAG-oriented version of the repository: source loading, retrieval, context compression, prompt assembly, and answer generation. It maps directly to AI application patterns such as model routing, latency control, and grounded responses.",
+    "relatedPaths": [
+      "Orchestrators/Python/README.md"
+    ],
+    "tags": [
+      "Python",
+      "RAG",
+      "retrieval"
+    ]
+  },
+  {
+    "id": "markdown-workflow-example",
+    "title": "Markdown Workflow Example",
+    "section": "orchestrators",
+    "summary": "A platform-neutral workflow described entirely in Markdown so agent handoffs can be studied without runtime code.",
+    "details": "This example models a two-phase C# review pipeline: one subagent identifies Task-based programming risks, then a second subagent performs deeper async/await analysis using only the compressed findings from phase one.",
+    "relatedPaths": [
+      "Orchestrators/Markdown/CSharpTaskAsyncReview/README.md"
+    ],
+    "tags": [
+      "Markdown",
+      "workflow",
+      "subagents"
+    ]
+  },
+  {
+    "id": "compressed-handoff",
+    "title": "Compressed Handoff",
+    "section": "orchestrators",
+    "summary": "A deliberately small context packet passed from one subagent phase to the next.",
+    "details": "The compression boundary keeps later agents focused and protects the model window. Instead of passing full transcripts, the first phase emits ranked findings, affected symbols, evidence anchors, and explicit open questions for the next phase.",
+    "relatedPaths": [
+      "Orchestrators/Markdown/CSharpTaskAsyncReview/workflow.md",
+      "Orchestrators/Markdown/CSharpTaskAsyncReview/references/compressed-handoff-contract.md"
+    ],
+    "tags": [
+      "context",
+      "handoff",
+      "token-budget"
+    ]
+  },
+  {
+    "id": "skills",
+    "title": "Skills",
+    "section": "skills",
+    "summary": "Portable Markdown capability packs with instructions, scope, and optional reference files.",
+    "details": "Skills are reusable, platform-neutral instructions that tell an agent how to perform a specialized task. A skill should explain when to use it, what inputs it expects, what references support it, and what output shape it should produce.",
+    "relatedPaths": [
+      "Skills/Summarization/SKILL.md"
+    ],
+    "tags": [
+      "Markdown",
+      "portable",
+      "instructions"
+    ]
+  },
+  {
+    "id": "prompts",
+    "title": "Prompts",
+    "section": "prompts",
+    "summary": "Reusable prompt templates that standardize agent behavior across orchestrators.",
+    "details": "Prompt assets provide stable instructions that can be loaded by different runtimes. Keeping prompts in repository files makes review, versioning, and reuse easier than embedding all behavior directly in code.",
+    "relatedPaths": [
+      "Prompts/README.md"
+    ],
+    "tags": [
+      "templates",
+      "instructions",
+      "reuse"
+    ]
+  }
+]

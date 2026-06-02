@@ -21,6 +21,7 @@ asks Claude to synthesize a final answer from all agent findings plus the origin
 | Folder | Runtime | Status |
 |--------|---------|--------|
 | `DotNet/` | .NET 9, C# | ✅ Reference implementation |
+| `Markdown/` | Markdown prompt workflows | ✅ Documentation-bound examples |
 | `Python/` | Python 3.12+, asyncio | ✅ RAG-oriented boilerplate |
 | `TypeScript/` | Node 22, Promise.all | 🔜 Planned |
 
@@ -37,3 +38,13 @@ asks Claude to synthesize a final answer from all agent findings plus the origin
 2. Implement `name`, `can_handle(ctx)`, and `async execute(ctx)`
 3. Add prompt files under `Python/prompts/` when needed
 4. Register the agent in `Python/aitrove_python/__main__.py`
+
+## Markdown-bound examples
+
+Markdown examples live under `Markdown/`. These are prompt and workflow specifications rather than executable runtimes.
+
+Current examples:
+
+| Folder | Purpose |
+| --- | --- |
+| `Markdown/CSharpTaskAsyncReview/` | Two-phase C# Task and async/await review with compressed subagent context handoff |

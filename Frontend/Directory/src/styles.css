@@ -76,6 +76,8 @@ button {
 .brand-block h1,
 .panel-header h2,
 .entry-card h3,
+.concept-card h3,
+.related-concept h3,
 .state-card h3 {
   margin: 0;
   letter-spacing: -0.03em;
@@ -90,6 +92,8 @@ button {
 .lede,
 .panel-copy,
 .entry-summary,
+.concept-card p,
+.related-concept p,
 .section-button-copy,
 .state-card p {
   color: var(--muted);
@@ -215,7 +219,8 @@ button {
 
 .meta-pill,
 .file-chip,
-.size-chip {
+.size-chip,
+.concept-tags span {
   border-radius: 999px;
   padding: 0.35rem 0.7rem;
   font-size: 0.78rem;
@@ -223,6 +228,69 @@ button {
   border: 1px solid var(--border);
   color: var(--muted);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.concept-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.concept-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.concept-section-header span {
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.78rem;
+}
+
+.concept-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.concept-card,
+.related-concept {
+  border: 1px solid rgba(15, 118, 110, 0.24);
+  border-radius: var(--radius-md);
+  background: rgba(15, 118, 110, 0.08);
+  min-width: 0;
+}
+
+.concept-card {
+  padding: 0.95rem;
+}
+
+.concept-card h3,
+.related-concept h3 {
+  font-size: 1rem;
+}
+
+.concept-card p,
+.related-concept p {
+  margin: 0.45rem 0 0;
+}
+
+.concept-details {
+  font-size: 0.92rem;
+}
+
+.concept-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.concept-tags span {
+  background: rgba(255, 255, 255, 0.56);
 }
 
 .entry-grid {
@@ -311,6 +379,15 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
+}
+
+.related-concepts {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.related-concept {
+  padding: 0.9rem;
 }
 
 .content-preview {
@@ -488,6 +565,11 @@ button {
     gap: 0.7rem;
     overflow: visible;
     padding-right: 0;
+  }
+
+  .concept-card,
+  .related-concept {
+    padding: 0.85rem;
   }
 
   .entry-card {

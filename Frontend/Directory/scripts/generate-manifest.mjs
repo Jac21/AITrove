@@ -7,6 +7,7 @@ const __dirname = path.dirname(__filename);
 const appRoot = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(appRoot, "..", "..");
 const outputPath = path.join(appRoot, "public", "generated", "manifest.json");
+const conceptsPath = path.join(appRoot, "content", "concepts.json");
 
 const sections = [
   {
@@ -94,6 +95,7 @@ const extensionToLanguage = {
 };
 
 async function main() {
+  const concepts = await loadConcepts();
   const entries = [];
 
   for (const section of sections) {
@@ -116,16 +118,109 @@ async function main() {
   }
 
   entries.sort((left, right) => left.path.localeCompare(right.path));
+  validateConceptCoverage(entries, concepts);
 
   const manifest = {
     generatedAt: new Date().toISOString(),
     sections: sections.map(({ id, title, description }) => ({ id, title, description })),
+    concepts,
     entries,
   };
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, JSON.stringify(manifest, null, 2));
-  console.log(`Generated manifest with ${entries.length} entries at ${path.relative(repoRoot, outputPath)}`);
+  console.log(
+    `Generated manifest with ${entries.length} entries and ${concepts.length} concepts at ${path.relative(repoRoot, outputPath)}`,
+  );
+}
+
+async function loadConcepts() {
+  const content = await fs.readFile(conceptsPath, "utf8");
+  const concepts = JSON.parse(content);
+
+  if (!Array.isArray(concepts)) {
+    throw new Error("Directory concepts must be a JSON array.");
+  }
+
+  const sectionIds = new Set(sections.map((section) => section.id));
+  const conceptIds = new Set();
+
+  return concepts.map((concept, index) => {
+    const location = `concepts[${index}]`;
+    assertNonEmptyString(concept.id, `${location}.id`);
+    assertNonEmptyString(concept.title, `${location}.title`);
+    assertNonEmptyString(concept.section, `${location}.section`);
+    assertNonEmptyString(concept.summary, `${location}.summary`);
+    assertNonEmptyString(concept.details, `${location}.details`);
+    assertStringArray(concept.relatedPaths, `${location}.relatedPaths`);
+    assertStringArray(concept.tags, `${location}.tags`);
+
+    if (conceptIds.has(concept.id)) {
+      throw new Error(`Duplicate directory concept id: ${concept.id}`);
+    }
+
+    if (!sectionIds.has(concept.section)) {
+      throw new Error(`Directory concept ${concept.id} uses unknown section: ${concept.section}`);
+    }
+
+    conceptIds.add(concept.id);
+
+    return {
+      id: concept.id,
+      title: concept.title,
+      section: concept.section,
+      summary: concept.summary,
+      details: concept.details,
+      relatedPaths: concept.relatedPaths,
+      tags: concept.tags,
+    };
+  });
+}
+
+function validateConceptCoverage(entries, concepts) {
+  const explainedPaths = new Set(concepts.flatMap((concept) => concept.relatedPaths));
+  const missing = entries.filter((entry) => requiresConcept(entry.path) && !explainedPaths.has(entry.path));
+
+  if (missing.length === 0) {
+    return;
+  }
+
+  const formattedPaths = missing.map((entry) => `- ${entry.path}`).join("\n");
+  throw new Error(
+    [
+      "The directory site is missing concept explanations for complex repository constructs.",
+      "Add entries to Frontend/Directory/content/concepts.json with relatedPaths for:",
+      formattedPaths,
+    ].join("\n"),
+  );
+}
+
+function requiresConcept(relativePath) {
+  if (relativePath === "Orchestrators/README.md") {
+    return true;
+  }
+
+  if (/^Orchestrators\/[^/]+\/README\.md$/.test(relativePath)) {
+    return true;
+  }
+
+  if (/^Orchestrators\/Markdown\/[^/]+\/(README|workflow)\.md$/.test(relativePath)) {
+    return true;
+  }
+
+  return /^Skills\/[^/]+\/SKILL\.md$/.test(relativePath);
+}
+
+function assertNonEmptyString(value, fieldName) {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`Directory concept field ${fieldName} must be a non-empty string.`);
+  }
+}
+
+function assertStringArray(value, fieldName) {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || item.trim().length === 0)) {
+    throw new Error(`Directory concept field ${fieldName} must be an array of non-empty strings.`);
+  }
 }
 
 async function walkDirectory(directory, section, entries) {
